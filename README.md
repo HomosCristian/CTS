@@ -31,11 +31,4 @@
 - Examenul poate fi susținut de oricine
 - Punctajul obținut în timpul semestrului se păstrează și are aceeași pondere de 50% din nota finală
 
----
 
-## **Instrucțiuni și recomandări**
-- Se recomandă revizuirea materialelor de seminar pentru testele practice.
-- Pregătiți-vă pentru examen prin exersarea întrebărilor deschise și a testelor grilă.
-- Participarea activă și temele pot contribui semnificativ la nota finală.
-
-Succes! 🎯
