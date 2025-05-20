@@ -1,0 +1,53 @@
+DECORATOR
+- se dorește adăugarea unei opțiuni temporare fără modificarea clasei existente
+- fără a modifica codul sursă
+- ofertă activă doar pentru o perioadă
+- se pot adăuga mai mulți decoratori în lanț
+
+STRATEGY
+- clientul poate alege o metodă de filtrare/afisare
+- mod de sortare selectabil
+- diferite comportamente care pot fi aplicate
+- strategia se alege la runtime
+
+COMPOSITE
+- structură arborescentă/ierarhică
+- elementele trebuie tratate unitar (noduri și frunze)
+- un obiect poate conține alte obiecte de același tip
+- agregare de entități (ex: secții în județe)
+
+PROXY
+- acces restricționat la funcționalitate
+- verificare înainte de a permite acțiunea
+- se intermediază accesul către o clasă
+- se controlează comportamentul fără modificarea clasei existente
+
+TEMPLATE METHOD
+- procedură generală cu pași fixați
+- unii pași sunt personalizabili
+- se respectă un sablon logic
+- algoritm cu structură comună, dar comportament diferit în unele etape
+
+CHAIN OF RESPONSIBILITY
+- cererea este procesată de mai mulți handleri
+- dacă nu poate fi tratat, se pasează mai departe
+- se aplică un lanț de filtre
+- ordinea de aplicare este flexibilă și configurabilă
+
+FLYWEIGHT
+- sunt multe obiecte similare, cu doar câteva diferențe
+- optimizare memorie prin reutilizarea obiectelor
+- partea comună este partajată
+- se separă starea intrinsecă de cea extrinsecă
+
+ADAPTER
+- sistemul vechi trebuie integrat cu cel nou
+- interfață incompatibilă
+- fără a modifica clasa veche
+- se dorește adaptarea unei metode existente
+
+FACADE
+- se simplifică interacțiunea cu subsistemele
+- clientul nu trebuie să știe detaliile interne
+- se dorește o interfață unică pentru operații multiple
+- se maschează complexitatea unui sistem existent

@@ -1,0 +1,197 @@
+
+DECORATOR
+
+Când vrei să adaugi funcționalități suplimentare unui obiect, fără să modifici clasa lui de bază.
+
+1.Interfata IProdus cu metoda afiseaza();
+2.Clasa de baza Produs;
+3.Clasa ABSTRACTA Decorator ProdusDecorator (atribut de tip IProdus);
+4.Extends de la decorator ex ReducereDecorator / AmbalajDecorator;
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+STRATEGY
+
+Când ai mai multe variante de comportament și vrei să alegi una dinamic, la runtime.
+
+1.Interfata StrategieFiltru cu boolean aplica(Produs p);
+2.Clasa Produs cu afiseaza();
+3.Clasa Magazin cu Lista de Produse / adauga produs in lista / public void filtreaza  
+
+	 public void filtreaza(StrategieFiltrare strategie){
+        for(Produs p :produse){
+            if(strategie.aplica(p)){
+                p.afiseaza();
+            }
+        }
+    }
+
+4.Clasa de filtrare (FiltruPretMic) care implementeaza Interfata;
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+COMPOSITE
+
+Când ai de-a face cu structuri ierarhice, unde un element poate fi individ sau grup.
+
+1.Interfata IComponenta cu void afiseaza();
+2.Frunza clasa Produs implements IComponenta;
+3.clasa Pachetul de componente implements ICOmponenta si List<IComponenta> / 
+
+ public void adaugaComponenta(IComponenta componenta){
+        componente.add(componenta);
+    }
+
+    @Override
+    public void afiseaza() {
+        System.out.println("Nume Pachet: "+nume);
+        for(IComponenta c: componente){
+            c.afiseaza();
+        }
+    }
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+PROXY
+
+Când vrei să controlezi accesul la un obiect real – fie pentru restricții, fie pentru logare, delay etc.
+
+
+1.Interfata IProdus cu rezerva(Client c);
+2.ProdusReal implements IProdus;
+3.ProdusProxy implements IProdus (atentie la constructor cand apelez in main) 
+
+ @Override
+    public void rezerva(Client c) {
+        if (c.isVip()) {
+            produsReal.reserva(c);
+        } else {
+            System.out.println("Acces refuzat pentru clientul " + c.getNume() + " (nu este VIP)");
+        }
+    }
+
+4.Client cu atribute nume si un boolean (esteVIP) 
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+TEMPLATE METHOD
+
+Când ai un algoritm fix, dar unele etape pot fi personalizate în subclase.
+
+
+1.Clasa Produs
+2.Clasa ABSTRACTA ProcesareProdus (Template abstract)
+public final void procesare(Produs p){
+        preluare(p);
+        validare(p);
+        salvare(p);
+        confirmare(p);
+    }
+
+    protected void preluare(Produs p){
+        System.out.println("Produs preluat : "+p.getNume());
+    }
+
+    protected abstract void validare(Produs p);
+
+    protected void salvare(Produs p){
+        System.out.println("Produs salvat in sistem");
+    }
+
+    protected void confirmare(Produs p){
+        System.out.println("Produs confirmat pt : "+ p.getNume());
+    }
+    
+3.Clase ,care extind ProcesareProdus, precum ProcesarePremium / procesareStandard (Concrete Template);
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+CHAIN OF RESPONSABILITY
+
+Când vrei ca mai multe obiecte să aibă șansa de a trata o cerere, într-un lanț.
+
+
+1.Clasa Client
+2.Clasa abstracta Notificator 
+public abstract class Notificator {
+    protected Notificator urmator;
+
+    public Notificator getUrmator() {
+        return urmator;
+    }
+
+    public void setUrmator(Notificator urmator) {
+        this.urmator = urmator;
+    }
+
+    public abstract void notifica(Client c);
+}
+3.Clasele care extind Notificator , NotificatorSMS/Email/Manager;
+
+public class NotificatorSMS extends Notificator{
+    @Override
+    public void notifica(Client c) {
+        if(c.getTelefon()!=null && !c.getTelefon().isEmpty()){
+            System.out.println("SMS trimis catre: "+c.getNume()+" la "+ c.getTelefon());
+        } else if (urmator!=null) {
+            urmator.notifica(c);
+        }
+    }
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+FLYWEIGHT 
+
+Când ai multe obiecte similare și vrei să eviți consumul mare de memorie.
+
+
+1.Interfata IProdus cu metoda afiseaza(DetaliiSpecifice detalii);
+2.Clasa DetaliiSpecifice cu atributele UNICE pt toate(ex: cod , pret);
+3.ProdusFlyweight implements IProdus ,reprezinta partea comuna (ex: tip, material),;
+4.FabricaFlyweight | MAP <String , IProdus> produse = new HashMap<>() si metoda 
+ 
+public IProdus getProdus(String tip, String material) {
+        String cheie = tip + "-" + material;
+        if (!produse.containsKey(cheie)) {
+            produse.put(cheie, new ProdusFlyweight(tip, material));
+        }
+        return produse.get(cheie);
+    }
+
+
+--------------------------------------------------------------------------------------------------
+
+ADAPTER
+
+Când ai o clasă existentă cu o metodă incompatibilă și vrei să o folosești în sistemul tău nou, fără să o modifici.
+
+1.Interfata IProdus cu void afiseaza();
+2.Clasa ProducVechi cu public void printVechi();
+3.Clasa ProdusAdapter implements IProdus;
+
+----------------------------------------------------------------------------------------
+
+FACADE
+
+Când ai mai multe subsisteme și vrei să le ascunzi clientului sub o interfață simplificată.
+
+
+1.Clase ex Stoc,Plati,Livrare cu metodele ei si ca atribut (String produs);
+2.ComandaFacade cu metoda procesareComanda();
+
+public class ComandaFacade {
+    private Stoc stoc = new Stoc();
+    private Plati plati = new Plati();
+    private Livrare livrare = new Livrare();
+
+    public void procesareComanda(String produs){
+        if(stoc.verifica(produs)){
+            plati.plateste(produs);
+            livrare.livreaza(produs);
+        }else{
+            System.out.println("Stoc insuficient pentru : "+produs);
+        }
+    }
+}
+
+
+

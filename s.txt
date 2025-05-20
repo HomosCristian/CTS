@@ -1,0 +1,797 @@
+// Chain of resp
+
+// Request.java
+public class Request {
+    private String data;
+    public Request(String data) { this.data = data; }
+    public String getData() { return data; }
+}
+
+// Handler.java
+public interface Handler {
+    void setNext(Handler next);
+    void handle(Request request);
+}
+
+// BaseHandler.java (opţional)
+public abstract class BaseHandler implements Handler {
+    protected Handler next;
+    @Override
+    public void setNext(Handler next) { this.next = next; }
+    @Override
+    public void handle(Request request) {
+        if (canHandle(request)) {
+            process(request);
+        }
+        if (next != null) {
+            next.handle(request);
+        }
+    }
+    protected abstract boolean canHandle(Request request);
+    protected abstract void process(Request request);
+}
+
+// ConcreteHandlerA.java
+public class ConcreteHandlerA extends BaseHandler {
+    @Override
+    protected boolean canHandle(Request request) {
+        return request.getData().contains("A");
+    }
+    @Override
+    protected void process(Request request) {
+        System.out.println("Handler A procesează: " + request.getData());
+    }
+}
+
+// ConcreteHandlerB.java
+public class ConcreteHandlerB extends BaseHandler {
+    @Override
+    protected boolean canHandle(Request request) {
+        return request.getData().contains("B");
+    }
+    @Override
+    protected void process(Request request) {
+        System.out.println("Handler B procesează: " + request.getData());
+    }
+}
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        // 1. Construim lanțul
+        Handler hA = new ConcreteHandlerA();
+        Handler hB = new ConcreteHandlerB();
+        hA.setNext(hB);
+
+        // 2. Trimitem cereri
+        hA.handle(new Request("Conţine A")); // preluat de A
+        hA.handle(new Request("Conţine B")); // sărit de A, preluat de B
+        hA.handle(new Request("Altceva"));    // niciun handler nu-l preia
+    }
+}
+
+
+// Strategy
+
+// Product.java
+public class Product {
+    private String id;
+    private String name;
+    private double basePrice;
+
+    public Product(String id, String name, double basePrice) {
+        this.id        = id;
+        this.name      = name;
+        this.basePrice = basePrice;
+    }
+
+    public String getId()        { return id; }
+    public String getName()      { return name; }
+    public double getBasePrice() { return basePrice; }
+
+    @Override
+    public String toString() {
+        return id + " | " + name + " | preț de bază " + basePrice + " lei";
+    }
+}
+
+// PricingStrategy.java
+public interface PricingStrategy {
+    /** Primeşte un produs şi returnează preţul calculat după această strategie */
+    double calculatePrice(Product product);
+}
+
+// RegularPricingStrategy.java
+public class RegularPricingStrategy implements PricingStrategy {
+    @Override
+    public double calculatePrice(Product product) {
+        // Preţul standard e exact preţul de bază
+        return product.getBasePrice();
+    }
+}
+
+// DiscountPricingStrategy.java
+public class DiscountPricingStrategy implements PricingStrategy {
+    private double discountRate; // ex. 0.10 pentru 10%
+
+    public DiscountPricingStrategy(double discountRate) {
+        this.discountRate = discountRate;
+    }
+
+    @Override
+    public double calculatePrice(Product product) {
+        // Aplică reducerea peste preţul de bază
+        return product.getBasePrice() * (1 - discountRate);
+    }
+}
+
+// MemberPricingStrategy.java
+public class MemberPricingStrategy implements PricingStrategy {
+    @Override
+    public double calculatePrice(Product product) {
+        // Clienţii membri plătesc preţ de bază minus 5 lei
+        return product.getBasePrice() - 5.0;
+    }
+}
+
+// PriceCalculator.java
+public class PriceCalculator {
+    private PricingStrategy strategy;
+
+    /** Context-ul primeşte o strategie concretă */
+    public PriceCalculator(PricingStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    /** Permite schimbarea strategiei la runtime */
+    public void setStrategy(PricingStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    /** Clientul apelează această metodă, delegând calculul strategiei */
+    public double calculate(Product product) {
+        return strategy.calculatePrice(product);
+    }
+}
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        Product prod = new Product("P100", "Sneakers", 200.0);
+        System.out.println(prod);
+
+        // 1) Preţ standard
+        PriceCalculator calculator = new PriceCalculator(new RegularPricingStrategy());
+        System.out.println("Preţ standard: " + calculator.calculate(prod) + " lei");
+
+        // 2) Preţ cu reducere 15%
+        calculator.setStrategy(new DiscountPricingStrategy(0.15));
+        System.out.println("Preţ cu reducere 15%: " + calculator.calculate(prod) + " lei");
+
+        // 3) Preţ pentru membri
+        calculator.setStrategy(new MemberPricingStrategy());
+        System.out.println("Preţ membru: " + calculator.calculate(prod) + " lei");
+    }
+}
+
+// Flyweight
+
+// Product.java (Flyweight – obiect cu stare intrinsecă partajată)
+public class Product {
+    private final String id;
+    private final String name;
+    private final double price;
+
+    public Product(String id, String name, double price) {
+        this.id    = id;
+        this.name  = name;
+        this.price = price;
+    }
+
+    public String getId()    { return id; }
+    public String getName()  { return name; }
+    public double getPrice() { return price; }
+}
+
+// ProductFactory.java (Flyweight Factory – gestionează cache-ul)
+import java.util.HashMap;
+import java.util.Map;
+
+public class ProductFactory {
+    private static final Map<String, Product> cache = new HashMap<>();
+
+    /**
+     * Returnează un Product partajat pentru id-ul dat.
+     * Dacă nu există încă în cache, îl creează și-l salvează.
+     */
+    public static Product getProduct(String id, String name, double price) {
+        if (!cache.containsKey(id)) {
+            cache.put(id, new Product(id, name, price));
+        }
+        return cache.get(id);
+    }
+
+    /** Numărul de instanțe distincte păstrate în cache */
+    public static int getTotalProducts() {
+        return cache.size();
+    }
+}
+
+// OrderItem.java (Context – stochează stare extrinsecă)
+public class OrderItem {
+    private Product product;  // flyweight
+    private int quantity;     // stare extrinsecă
+
+    public OrderItem(Product product, int quantity) {
+        this.product  = product;
+        this.quantity = quantity;
+    }
+
+    public void print() {
+        System.out.println(product.getName() + " x " + quantity
+            + " = " + (product.getPrice() * quantity) + " lei");
+    }
+}
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        // Obținem două referințe către același obiect Product („flyweight”)
+        Product p1 = ProductFactory.getProduct("P1", "Sneakers", 200.0);
+        Product p2 = ProductFactory.getProduct("P1", "Sneakers", 200.0);
+
+        System.out.println("p1 == p2 ? " + (p1 == p2)); // true – instanță partajată
+
+        // Creăm două OrderItem cu stări extrinseci diferite (cantități)
+        OrderItem item1 = new OrderItem(p1, 2);
+        OrderItem item2 = new OrderItem(p2, 5);
+
+        item1.print(); // Sneakers x 2 = 400.0 lei
+        item2.print(); // Sneakers x 5 = 1000.0 lei
+
+        // Introducem un alt produs distinct
+        Product p3 = ProductFactory.getProduct("P2", "Boots", 350.0);
+        OrderItem item3 = new OrderItem(p3, 1);
+        item3.print(); // Boots x 1 = 350.0 lei
+
+        System.out.println("Număr instanțe distincte în cache: "
+            + ProductFactory.getTotalProducts()); // 2
+    }
+}
+
+
+//Composite
+
+package Composite.clase;
+
+// Composite.clase.EmployeeComponent.java
+public interface EmployeeComponent {
+    /** Afișează detaliile componentelor cu indentare opțională */
+    void print(String indent);
+}
+
+package Composite.clase;
+
+// Employee.java (Leaf)
+public class Employee implements EmployeeComponent {
+    private String name;
+    private String role;
+    private double salary;
+
+    public Employee(String name, String role, double salary) {
+        this.name   = name;
+        this.role   = role;
+        this.salary = salary;
+    }
+
+    @Override
+    public void print(String indent) {
+        System.out.println(indent + "- " + name
+                + " | " + role
+                + " | salariu: " + salary);
+    }
+}
+
+package Composite.clase;
+
+// Department.java (Composite)
+import java.util.ArrayList;
+import java.util.List;
+
+public class Department implements EmployeeComponent {
+    private String name;
+    private List<EmployeeComponent> members = new ArrayList<>();
+
+    public Department(String name) {
+        this.name = name;
+    }
+
+    public void add(EmployeeComponent comp) {
+        members.add(comp);
+    }
+
+    public void remove(EmployeeComponent comp) {
+        members.remove(comp);
+    }
+
+    @Override
+    public void print(String indent) {
+        System.out.println(indent + "+ Departament: " + name);
+        for (EmployeeComponent comp : members) {
+            comp.print(indent + "   ");
+        }
+    }
+}
+
+package Composite.program;
+
+import Composite.clase.Department;
+import Composite.clase.Employee;
+import Composite.clase.EmployeeComponent;
+
+// Decorator.program.Main.java
+public class Main {
+    public static void main(String[] args) {
+        // 1) Câțiva angajați
+        EmployeeComponent e1 = new Employee("Ana",   "Developer", 3000);
+        EmployeeComponent e2 = new Employee("Bogdan","Tester",     2500);
+        EmployeeComponent e3 = new Employee("Carmen","Designer",   2800);
+        EmployeeComponent e4 = new Employee("Dan",   "DevOps",     3200);
+
+        // 2) Departamente simple
+        Department devDept    = new Department("Dezvoltare");
+        devDept.add(e1);
+        devDept.add(e4);
+
+        Department qaDept     = new Department("Quality Assurance");
+        qaDept.add(e2);
+
+        Department designDept = new Department("Design");
+        designDept.add(e3);
+
+        // 3) Departament mai mare care conține subdepartamente
+        Department itDept = new Department("IT");
+        itDept.add(devDept);
+        itDept.add(qaDept);
+        itDept.add(designDept);
+
+        // 4) Afișăm ierarhia
+        itDept.print("");
+    }
+}
+
+// Decorator
+
+package Decorator.clase;
+
+// Pizza.java (Component)
+public interface Pizza {
+    /** Descrierea completă a pizzei */
+    String descriere();
+    /** Prețul total al pizzei */
+    double pret();
+}
+
+package Decorator.clase;
+
+// PizzaSimpla.java (ConcreteComponent)
+public class PizzaSimpla implements Pizza {
+    @Override
+    public String descriere() {
+        return "Pizza simplă";
+    }
+
+    @Override
+    public double pret() {
+        return 15.00;
+    }
+}
+
+package Decorator.clase;
+
+// ToppingDecorator.java (Decorator)
+public abstract class ToppingDecorator implements Pizza {
+    protected Pizza pizza;
+
+    public ToppingDecorator(Pizza pizza) {
+        this.pizza = pizza;
+    }
+
+    @Override
+    public String descriere() {
+        return pizza.descriere();
+    }
+
+    @Override
+    public double pret() {
+        return pizza.pret();
+    }
+}
+
+package Decorator.clase;
+
+// Salam.java (ConcreteDecorator)
+public class Salam extends ToppingDecorator {
+    public Salam(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public String descriere() {
+        return super.descriere() + ", salam";
+    }
+
+    @Override
+    public double pret() {
+        return super.pret() + 4.00;
+    }
+}
+
+package Decorator.clase;
+
+// Mozzarella.java (ConcreteDecorator)
+public class Mozzarella extends ToppingDecorator {
+    public Mozzarella(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public String descriere() {
+        return super.descriere() + ", mozzarella";
+    }
+
+    @Override
+    public double pret() {
+        return super.pret() + 3.50;
+    }
+}
+
+package Decorator.clase;
+
+// Masline.java (ConcreteDecorator)
+public class Masline extends ToppingDecorator {
+    public Masline(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public String descriere() {
+        return super.descriere() + ", măsline";
+    }
+
+    @Override
+    public double pret() {
+        return super.pret() + 2.50;
+    }
+}
+
+package Decorator.program;
+
+import Decorator.clase.*;
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        // Pizza de bază
+        Pizza p = new PizzaSimpla();
+        System.out.println(p.descriere() + " — " + p.pret() + " lei");
+
+        // Adăugăm mozzarella și salam
+        p = new Mozzarella(p);
+        p = new Salam(p);
+        System.out.println(p.descriere() + " — " + p.pret() + " lei");
+
+        // Pornim de la o nouă pizza simplă, adăugăm măsline și mozzarella
+        Pizza p2 = new PizzaSimpla();
+        p2 = new Masline(p2);
+        p2 = new Mozzarella(p2);
+        System.out.println(p2.descriere() + " — " + p2.pret() + " lei");
+    }
+}
+
+// Proxy
+
+package Proxy.clase;
+
+public interface IAutentificare {
+    boolean autentificare(String username, String password);
+}
+
+package Proxy.clase;
+
+public class Autentificare implements IAutentificare{
+
+    @Override
+    public boolean autentificare(String username, String password) {
+        if(username.equals(password)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+package Proxy.clase;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class AutentificareProxy implements IAutentificare{
+    private Autentificare sistem;
+    private static Map<String, Integer> mapUtilizatori = new HashMap<>();
+
+    public AutentificareProxy(Autentificare sistem) {
+        this.sistem = sistem;
+    }
+
+    @Override
+    public boolean autentificare(String username, String password) {
+        if(!mapUtilizatori.containsKey(username)) {
+            mapUtilizatori.put(username, 0);
+        }
+        if(mapUtilizatori.get(username) >= 3) {
+            System.out.println("Utilizatorul este in timeout!");
+        } else {
+            boolean rezultat =  sistem.autentificare(username, password);
+
+            if(!rezultat) {
+                mapUtilizatori.put(username, mapUtilizatori.get(username)+1);
+            }
+            return rezultat;
+        }
+        return false;
+    }
+}
+
+package Proxy.program;
+
+import Proxy.clase.Autentificare;
+import Proxy.clase.AutentificareProxy;
+import Proxy.clase.IAutentificare;
+
+public class Main {
+    //daca utilizatorul greseste parola de mai mult de 3 ori, acesta intra in timpul de asteptare,
+    //inainte de proxy utilizatorul putea sa greseasca parola de un numar nelimitat
+    public static void functie(IAutentificare sistem, String username, String password) {
+        boolean rezultat = sistem.autentificare(username, password);
+        if(rezultat) {
+            System.out.println("S-a permis accesul pentru " + username + "!");
+        } else {
+            System.out.println("Nu s-a permis accesul pentru " + username + "!");
+        }
+    }
+
+    public static void main(String[] args) {
+        IAutentificare sistem = new AutentificareProxy(new Autentificare());
+        functie(sistem, "Alex", "parolaAlex");
+        functie(sistem, "Alex", "parolaAlex");
+        functie(sistem, "Alex", "parolaAlex");
+        functie(sistem, "Alex", "parolaAlex");
+        functie(sistem, "Alex", "Alex");
+    }
+}
+
+// Template
+
+package Template.clase;
+
+// BauturaCalda.java (Template Method)
+public abstract class BauturaCalda {
+    /** Șablonul fix: pașii generali de preparare */
+    public final void prepareRecipe() {
+        fierbeApa();
+        preparaBopt();
+        toarnaLaCana();
+        adaugaIngrediente();
+        System.out.println("Băutura este gata!\n");
+    }
+
+    private void fierbeApa() {
+        System.out.println("Fierb apa");
+    }
+
+    private void toarnaLaCana() {
+        System.out.println("Torn în cană");
+    }
+
+    /** Pași specifici pe care subclasele îi vor implementa: */
+    protected abstract void preparaBopt();
+    protected abstract void adaugaIngrediente();
+}
+
+package Template.clase;
+
+// Cafea.java (Concrete Template)
+public class Cafea extends BauturaCalda {
+    @Override
+    protected void preparaBopt() {
+        System.out.println("Adaug cafea măcinată");
+    }
+
+    @Override
+    protected void adaugaIngrediente() {
+        System.out.println("Adaug lapte și zahăr");
+    }
+}
+
+package Template.clase;
+
+// Ceai.java (Concrete Template)
+public class Ceai extends BauturaCalda {
+    @Override
+    protected void preparaBopt() {
+        System.out.println("Adaug frunze de ceai");
+    }
+
+    @Override
+    protected void adaugaIngrediente() {
+        System.out.println("Adaug lămâie și miere");
+    }
+}
+
+package Template.program;
+
+import Template.clase.BauturaCalda;
+import Template.clase.Cafea;
+import Template.clase.Ceai;
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        BauturaCalda ceai = new Ceai();
+        System.out.println("=== Preparare ceai ===");
+        ceai.prepareRecipe();
+
+        BauturaCalda cafea = new Cafea();
+        System.out.println("=== Preparare cafea ===");
+        cafea.prepareRecipe();
+    }
+}
+
+// Adapter
+
+package Adapter.clase;
+
+// AndroidPhone.java (Adaptee)
+public class AndroidPhone {
+    /** Metodă specifică de încărcare pentru Android (Micro-USB) */
+    public void chargeWithMicroUsb() {
+        System.out.println("AndroidPhone: încărcare prin Micro-USB");
+    }
+}
+
+package Adapter.clase;
+
+// IPhone.java (Adaptee)
+public class Iphone {
+    /** Metodă specifică de încărcare pentru iPhone (Lightning) */
+    public void chargeWithLightning() {
+        System.out.println("IPhone: încărcare prin Lightning");
+    }
+}
+
+package Adapter.clase;
+
+// ChargerStation.java (Clientul care folosește interfața Charger)
+public class ChargerStation {
+    /** Primește orice implementare de Charger și îl încarcă */
+    public void startCharging(Charger charger) {
+        charger.charge();
+    }
+}
+
+package Adapter.clase;
+
+// LightningPhoneAdapter.java (Adapter pentru IPhone)
+public class LightningPhoneAdapter implements Charger {
+    private Iphone iphone;
+
+    public LightningPhoneAdapter(Iphone iphone) {
+        this.iphone = iphone;
+    }
+
+    @Override
+    public void charge() {
+        // Traduce apelul generic charge() în chargeWithLightning()
+        iphone.chargeWithLightning();
+    }
+}
+
+package Adapter.clase;
+
+// MicroUsbPhoneAdapter.java (Adapter pentru AndroidPhone)
+public class MicroUsbPhoneAdapter implements Charger {
+    private AndroidPhone android;
+
+    public MicroUsbPhoneAdapter(AndroidPhone android) {
+        this.android = android;
+    }
+
+    @Override
+    public void charge() {
+        // Traduce apelul generic charge() în chargeWithMicroUsb()
+        android.chargeWithMicroUsb();
+    }
+}
+
+package Adapter.program;
+
+import Adapter.clase.*;
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        ChargerStation station = new ChargerStation();
+
+        AndroidPhone android = new AndroidPhone();
+        Iphone iphone       = new Iphone();
+
+        // Adaptăm fiecare telefon la interfața Charger
+        Charger androidCharger = new MicroUsbPhoneAdapter(android);
+        Charger iPhoneCharger  = new LightningPhoneAdapter(iphone);
+
+        // Clientul folosește același apel charge() pe ambele dispozitive
+        station.startCharging(androidCharger); // AndroidPhone: încărcare prin Micro-USB
+        station.startCharging(iPhoneCharger);  // IPhone: încărcare prin Lightning
+    }
+}
+
+//Facada
+
+package Facade.clase;
+
+public class Livrare {
+    public void livreaza(String produs) {
+        System.out.println("Produsul a fost livrat: " + produs);
+    }
+}
+
+package Facade.clase;
+
+public class Plati {
+    public void plateste(String produs) {
+        System.out.println("Plata efectuată pentru: " + produs);
+    }
+}
+
+package Facade.clase;
+
+public class Stoc {
+    public boolean verifica(String produs){
+        System.out.println("Verificare stoc pentru : "+produs);
+        return true;
+    }
+}
+
+package Facade.clase;
+
+public class ComandaFacade {
+    private Stoc stoc = new Stoc();
+    private Plati plati = new Plati();
+    private Livrare livrare = new Livrare();
+
+    public void procesareComanda(String produs){
+        if(stoc.verifica(produs)){
+            plati.plateste(produs);
+            livrare.livreaza(produs);
+        }else{
+            System.out.println("Stoc insuficient pentru : "+produs);
+        }
+    }
+}
+
+package Facade.program;
+
+import Facade.clase.ComandaFacade;
+
+public class Main {
+    public static void main(String[] args) {
+
+        ComandaFacade comandaFacade = new ComandaFacade();
+        comandaFacade.procesareComanda("Laptop");
+    }
+}
+
+
+
+
